@@ -62,7 +62,7 @@ class TURN_CLIENT:
 
         # 判断申请是否成功，成功则启动定时刷新线程并返回中继地址
         if response.message_class!=TURN_CLIENT.Class.RESPONSE: raise RuntimeError()
-        refresh_time=response.attributes["LIFETIME"]*6/5
+        refresh_time=response.attributes["LIFETIME"]*5/6
         self.relayed_address=response.attributes["XOR-RELAYED-ADDRESS"]
         self.refresh_loop=threading.Thread(target=self.refresh,args=(refresh_time,))
         self.refresh_loop.start()
@@ -110,7 +110,7 @@ class TURN_CLIENT:
         # 判断申请是否成功，成功则再次按照存活时间启动刷新线程，0除外
         if response.message_class!=TURN_CLIENT.Class.RESPONSE: raise RuntimeError()
         if expire_time==0: return
-        refresh_time=response.attributes["LIFETIME"]*6/5
+        refresh_time=response.attributes["LIFETIME"]*5/6
         self.refresh_loop=threading.Thread(target=self.refresh,args=(refresh_time,))
         self.refresh_loop.start()
 
