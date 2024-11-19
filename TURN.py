@@ -69,16 +69,22 @@ class TURN_CLIENT:
 
         return self.relayed_address
 
+    def __recv__(self,size):
+        data=b''
+        while len(data)!=size:
+            data+=self.sock.recv(size-len(data))
+        return data
+
     def recv(self):
-        raw_data_info=self.sock.recv(4)
+        raw_data_info=self.__recv__(4)
         info,length=struct.unpack("!HH",raw_data_info)
         # 只有是固定隧道号0x7777才判断为隧道数据
         if info==0x7777:
             # TCP相关的传输方式必须补齐4字节倍数的大小
-            user_data=self.sock.recv(length)
-            self.sock.recv((4-length%4)%4)
+            user_data=self.__recv__(length)
+            self.__recv__((4-length%4)%4)
             return user_data
-        response=raw_data_info+self.sock.recv(16+length)
+        response=raw_data_info+self.__recv__(16+length)
         # stun标准包必定是4的倍数大小，不用丢弃
         response=TURN_CLIENT.parse_message(response)
         self.responses[response.transaction_id]=response
@@ -134,9 +140,9 @@ class TURN_CLIENT:
     def response(self,request):
         # 仅在数据通道未打开时，直接发送请求并获取返回
         self.request(request)
-        raw_head=self.sock.recv(20)
+        raw_head=self.__recv__(20)
         body_len=struct.unpack("!HHI12s",raw_head)[1]
-        raw_data=raw_head+self.sock.recv(body_len)
+        raw_data=raw_head+self.__recv__(body_len)
         # stun标准包必定是4的倍数大小，不用丢弃
         return TURN_CLIENT.parse_message(raw_data)
 
